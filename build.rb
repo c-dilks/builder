@@ -1,12 +1,12 @@
 #!/usr/bin/env ruby
 
+ncpu = `nproc`.chomp
 if ARGV.empty?
-  $stderr.puts "USAGE: #{$0} [REPO]"
+  $stderr.puts "USAGE: #{$0} [REPO] [NCPU(def=#{ncpu})]"
   exit 2
 end
-repo  = ARGV[0]
-NPROC = 4 # FIXME: automate
-
+repo = ARGV[0]
+ncpu = ARGV[1] if ARGV.length > 1
 
 # set prefix
 prefix = "#{Dir.pwd}/install"
@@ -24,26 +24,26 @@ end
 
 
 # cmake commands
-def cmakeGen(repo, install)
+cmakeGen = Proc.new do |repo, install|
   exe "cmake -S #{repo} -B #{buildSys repo} -DCMAKE_INSTALL_PREFIX=#{install}"
 end
-def cmakeBuild(repo)
-  exe "cmake --build #{buildSys repo} -j#{NPROC}"
+cmakeBuild = Proc.new do |repo|
+  exe "cmake --build #{buildSys repo} -- -j#{ncpu}"
 end
-def cmakeInstall(repo)
+cmakeInstall = Proc.new do |repo|
   exe "cmake --install #{buildSys repo}"
 end
-def cmake(repo, install)
-  cmakeGen     repo, install
-  cmakeBuild   repo
-  cmakeInstall repo
+cmake = Proc.new do |repo, install|
+  cmakeGen.call     repo, install
+  cmakeBuild.call   repo
+  cmakeInstall.call repo
 end
 
 
 # build a repo
 case repo
 when 'hipo'
-  cmake repo, prefix
+  cmake.call repo, prefix
 else
   $stderr.puts "ERROR: unknown repo '#{repo}'"
   exit 1
