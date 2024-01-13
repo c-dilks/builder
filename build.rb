@@ -30,8 +30,8 @@ end
 cmakeGen     = Proc.new{ |args=''| exe "cmake -S #{repo} -B #{buildSys repo} -DCMAKE_INSTALL_PREFIX=#{prefix} #{args}" }
 cmakeBuild   = Proc.new{ exe "cmake --build #{buildSys repo} -j#{ncpu}" }
 cmakeInstall = Proc.new{ exe "cmake --install #{buildSys repo}" }
-cmake = Proc.new do |args|
-  cmakeGen.call args
+cmake = Proc.new do |argList=[]|
+  cmakeGen.call argList.join(' ')
   cmakeBuild.call
   cmakeInstall.call
 end
@@ -42,7 +42,11 @@ case repo
 when 'hipo'
   cmake.call
 when 'fmt'
-  cmake.call cmakeOpt('CMAKE_POSITION_INDEPENDENT_CODE','ON')
+  cmake.call [
+    ### can only build either shared or static lib, but not both! ###
+    cmakeOpt('CMAKE_POSITION_INDEPENDENT_CODE','TRUE'), # static library
+    # cmakeOpt('BUILD_SHARED_LIBS','TRUE'), # shared library
+  ]
 else
   $stderr.puts "ERROR: unknown repo '#{repo}'"
   exit 1
