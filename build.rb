@@ -27,7 +27,7 @@ end
 def cmakeOpt(key, val)
   "-D#{key}=#{val}"
 end
-cmakeGen     = Proc.new{ |args=''| exe "cmake -S #{repo} -B #{buildSys repo} --install-prefix=#{prefix} #{args}" }
+cmakeGen     = Proc.new{ |args=''| exe "cmake -S #{repo} -B #{buildSys repo} -DCMAKE_INSTALL_PREFIX=#{prefix} #{args}" }
 cmakeBuild   = Proc.new{ exe "cmake --build #{buildSys repo} -j#{ncpu}" }
 cmakeInstall = Proc.new{ exe "cmake --install #{buildSys repo}" }
 cmake = Proc.new do |argList=[]|
@@ -47,6 +47,8 @@ when 'fmt'
     cmakeOpt('CMAKE_POSITION_INDEPENDENT_CODE','TRUE'), # static library
     # cmakeOpt('BUILD_SHARED_LIBS','TRUE'), # shared library
   ]
+when 'yaml-cpp'
+  cmake.call
 else
   $stderr.puts "ERROR: unknown repo '#{repo}'"
   exit 1
