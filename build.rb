@@ -1,15 +1,24 @@
 #!/usr/bin/env ruby
 
-ncpu = `nproc`.chomp
+ncpu   = `nproc`.chomp
+prefix = "#{Dir.pwd}/install"
 if ARGV.empty?
-  $stderr.puts "USAGE: #{$0} [REPO] [NCPU(def=#{ncpu})]"
+  $stderr.puts """
+  USAGE: #{$0} [REPO] [NTHREADS] [PREFIX]
+
+    REPO      repo name
+
+    NTHREADS  number of threads
+              default = #{ncpu}
+
+    PREFIX    installation prefix (must be absolute)
+              default = #{prefix}
+  """
   exit 2
 end
-repo = ARGV[0]
-ncpu = ARGV[1] if ARGV.length > 1
-
-# set prefix
-prefix = "#{Dir.pwd}/install"
+repo   = ARGV[0]
+ncpu   = ARGV[1] if ARGV.length > 1
+prefix = ARGV[2] if ARGV.length > 2
 
 # set build system
 def buildSys(repo)
@@ -39,16 +48,27 @@ end
 
 # build a repo
 case repo
-when 'hipo'
-  cmake.call
+
 when 'fmt'
   cmake.call [
     ### can only build either shared or static lib, but not both! ###
     cmakeOpt('CMAKE_POSITION_INDEPENDENT_CODE','TRUE'), # static library
     # cmakeOpt('BUILD_SHARED_LIBS','TRUE'), # shared library
   ]
+
+when 'hipo'
+  cmake.call [
+    cmakeOpt('CMAKE_POSITION_INDEPENDENT_CODE','TRUE'),
+  ]
+
+when 'RubyROOT'
+  cmake.call [
+    cmakeOpt('ENABLE_MINUIT2','OFF'),
+  ]
+
 when 'yaml-cpp'
   cmake.call
+
 else
   $stderr.puts "ERROR: unknown repo '#{repo}'"
   exit 1
